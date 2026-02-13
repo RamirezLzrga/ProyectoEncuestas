@@ -1,0 +1,2187 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UAEMex - Sistema de Evaluaciones</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --uaemex-green: #006747;
+            --uaemex-gold: #B9975C;
+            --uaemex-dark: #1E3A2E;
+            --uaemex-light: #F5F2E9;
+            --success: #2E7D32;
+            --warning: #ED6C02;
+            --danger: #D32F2F;
+            --info: #0288D1;
+            --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.1);
+            --border-radius: 12px;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f8fafc;
+            color: #1e293b;
+        }
+
+        /* Login Screen */
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--uaemex-dark), var(--uaemex-green));
+        }
+
+        .login-card {
+            background: white;
+            padding: 3rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-md);
+            width: 100%;
+            max-width: 420px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .login-logo {
+            width: 80px;
+            height: 80px;
+            background: var(--uaemex-gold);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--uaemex-dark);
+            margin: 0 auto 1rem;
+        }
+
+        .login-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--uaemex-dark);
+            margin-bottom: 0.5rem;
+        }
+
+        .login-subtitle {
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+
+        /* App Container */
+        #app {
+            display: none;
+            grid-template-columns: 280px 1fr;
+            min-height: 100vh;
+        }
+
+        #app.logged-in {
+            display: grid;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            background: linear-gradient(165deg, var(--uaemex-dark) 0%, var(--uaemex-green) 100%);
+            color: white;
+            padding: 2rem 0;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        .logo-area {
+            padding: 0 1.5rem 2rem;
+            border-bottom: 2px solid rgba(255,255,255,0.1);
+            margin-bottom: 2rem;
+        }
+
+        .uaemex-logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo-shield {
+            width: 48px;
+            height: 48px;
+            background: var(--uaemex-gold);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--uaemex-dark);
+        }
+
+        .nav-menu {
+            list-style: none;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.875rem 1.5rem;
+            color: rgba(255,255,255,0.85);
+            text-decoration: none;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .nav-link:hover {
+            background: rgba(255,255,255,0.1);
+            color: white;
+        }
+
+        .nav-link.active {
+            background: rgba(185, 151, 92, 0.25);
+            color: white;
+            border-left: 4px solid var(--uaemex-gold);
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 2rem;
+            overflow-y: auto;
+            max-height: 100vh;
+        }
+
+        .view {
+            display: none;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .view.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .view-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            background: white;
+            padding: 1.5rem 2rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .view-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--uaemex-dark);
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .btn-primary {
+            background: var(--uaemex-green);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--uaemex-dark);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-outline {
+            background: white;
+            border: 1px solid var(--uaemex-green);
+            color: var(--uaemex-green);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-warning {
+            background: var(--warning);
+            color: white;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid #e2e8f0;
+        }
+
+        .stat-value {
+            font-size: 2.25rem;
+            font-weight: 700;
+            color: var(--uaemex-dark);
+        }
+
+        /* Charts */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .chart-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-sm);
+        }
+
+        /* Surveys Grid */
+        .surveys-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .survey-card {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid #e2e8f0;
+            transition: all 0.2s;
+        }
+
+        .survey-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-md);
+            border-color: var(--uaemex-gold);
+        }
+
+        .survey-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 1rem;
+        }
+
+        .survey-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--uaemex-dark);
+        }
+
+        .survey-status {
+            padding: 0.375rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .status-active {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status-inactive {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .survey-stats {
+            display: flex;
+            justify-content: space-between;
+            margin: 1rem 0;
+            padding: 1rem 0;
+            border-top: 1px solid #e2e8f0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .survey-link {
+            background: var(--uaemex-light);
+            padding: 0.75rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .survey-link input {
+            background: transparent;
+            border: none;
+            flex: 1;
+            font-family: monospace;
+            font-size: 0.75rem;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 2rem;
+            position: relative;
+        }
+
+        .modal-lg {
+            max-width: 1000px;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #64748b;
+        }
+
+        /* Form Builder */
+        .form-builder {
+            display: grid;
+            grid-template-columns: 1fr 320px;
+            gap: 1.5rem;
+        }
+
+        .form-editor {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+        }
+
+        .form-preview {
+            background: var(--uaemex-light);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            position: sticky;
+            top: 2rem;
+            height: fit-content;
+            max-height: calc(90vh - 4rem);
+            overflow-y: auto;
+        }
+
+        .question-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .question-options {
+            margin-top: 1rem;
+            padding-left: 1.5rem;
+        }
+
+        .option-row {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Switch */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 48px;
+            height: 24px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .2s;
+            border-radius: 24px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 2px;
+            bottom: 2px;
+            background-color: white;
+            transition: .2s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: var(--uaemex-green);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(24px);
+        }
+
+        /* Badges */
+        .badge {
+            padding: 0.375rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .badge-success { background: #dcfce7; color: #166534; }
+        .badge-warning { background: #fef3c7; color: #92400e; }
+        .badge-danger { background: #fee2e2; color: #991b1b; }
+        .badge-info { background: #e0f2fe; color: #0369a1; }
+
+        /* Logs */
+        .logs-container {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+        }
+
+        .log-entry {
+            display: flex;
+            gap: 1rem;
+            padding: 1rem 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .log-time {
+            color: #64748b;
+            font-size: 0.75rem;
+            min-width: 100px;
+        }
+
+        /* Settings Grid */
+        .settings-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+
+        .setting-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+
+        /* Vista de Encuesta Pública */
+        .public-survey {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            max-width: 800px;
+            margin: 0 auto;
+            box-shadow: var(--shadow-md);
+        }
+
+        .public-survey-header {
+            background: linear-gradient(135deg, var(--uaemex-dark), var(--uaemex-green));
+            color: white;
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            margin-bottom: 2rem;
+        }
+
+        .public-survey-question {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            #app {
+                grid-template-columns: 1fr;
+            }
+            .sidebar {
+                position: relative;
+                height: auto;
+            }
+            .form-builder {
+                grid-template-columns: 1fr;
+            }
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+            .settings-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div id="loginScreen" class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <div class="login-logo">UA</div>
+                <h1 class="login-title">SIEI UAEMex</h1>
+                <p class="login-subtitle">Sistema Integral de Evaluación Institucional</p>
+            </div>
+            
+            <form onsubmit="event.preventDefault(); login()">
+                <div style="margin-bottom: 1.5rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--uaemex-dark);">Usuario</label>
+                    <input type="text" id="loginUsername" class="form-control" placeholder="usuario@uaemex.mx" value="admin@uaemex.mx" required>
+                </div>
+                
+                <div style="margin-bottom: 2rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--uaemex-dark);">Contraseña</label>
+                    <input type="password" id="loginPassword" class="form-control" placeholder="••••••••" value="admin123" required>
+                </div>
+                
+                <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">
+                    <span>🔐</span> Iniciar Sesión
+                </button>
+                
+                <div style="margin-top: 1rem; text-align: center; color: #64748b; font-size: 0.875rem;">
+                    Usuario: admin@uaemex.mx / Contraseña: admin123
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- App Container -->
+    <div id="app">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo-area">
+                <div class="uaemex-logo">
+                    <div class="logo-shield">UA</div>
+                    <div style="font-size: 1.25rem; font-weight: 700;">
+                        SIEI UAEMex
+                    </div>
+                </div>
+            </div>
+
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a class="nav-link active" data-view="dashboard">
+                        <span>📊</span> Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-view="encuestas">
+                        <span>📋</span> Encuestas
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-view="estadisticas">
+                        <span>📈</span> Estadísticas
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-view="plantillas">
+                        <span>📄</span> Plantillas
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-view="bitacora">
+                        <span>📝</span> Bitácora
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-view="usuarios">
+                        <span>👥</span> Usuarios
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" onclick="logout()">
+                        <span>🚪</span> Cerrar Sesión
+                    </a>
+                </li>
+            </ul>
+
+            <div style="margin-top: auto; padding: 1.5rem;">
+                <div style="background: rgba(255,255,255,0.1); padding: 1rem; border-radius: 8px;">
+                    <div style="display: flex; gap: 0.75rem; align-items: center;">
+                        <div style="width: 40px; height: 40px; background: var(--uaemex-gold); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; color: var(--uaemex-dark);" id="userInitials">
+                            AD
+                        </div>
+                        <div>
+                            <div style="font-weight: 600;" id="userName">Admin</div>
+                            <div style="font-size: 0.75rem; opacity: 0.8;" id="userRole">Administrador</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- VIEW: Dashboard -->
+            <div id="view-dashboard" class="view active">
+                <div class="view-header">
+                    <div>
+                        <h1 class="view-title">Dashboard</h1>
+                        <p style="color: #64748b;">Bienvenido al sistema de evaluaciones UAEMex</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="openModal('encuestaModal')">
+                        <span>➕</span> Nueva Encuesta
+                    </button>
+                </div>
+                
+                <div class="stats-grid" id="dashboardStats">
+                    <!-- Se llena dinámicamente -->
+                </div>
+
+                <div class="charts-grid">
+                    <div class="chart-card">
+                        <h3 style="margin-bottom: 1rem;">Respuestas por Encuesta</h3>
+                        <canvas id="responsesChart"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <h3 style="margin-bottom: 1rem;">Estado de Encuestas</h3>
+                        <canvas id="statusChart"></canvas>
+                    </div>
+                </div>
+
+                <div style="background: white; border-radius: var(--border-radius); padding: 1.5rem;">
+                    <h3 style="margin-bottom: 1.5rem;">Encuestas Recientes</h3>
+                    <div class="surveys-grid" id="recentSurveys">
+                        <!-- Se llena dinámicamente -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: Encuestas -->
+            <div id="view-encuestas" class="view">
+                <div class="view-header">
+                    <div>
+                        <h1 class="view-title">Encuestas</h1>
+                        <p style="color: #64748b;">Gestiona todas tus encuestas</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="openModal('encuestaModal')">
+                        <span>➕</span> Nueva Encuesta
+                    </button>
+                </div>
+
+                <div class="surveys-grid" id="encuestasGrid">
+                    <!-- Se llena dinámicamente -->
+                </div>
+            </div>
+
+            <!-- VIEW: Estadísticas -->
+            <div id="view-estadisticas" class="view">
+                <div class="view-header">
+                    <div>
+                        <h1 class="view-title">Estadísticas</h1>
+                        <p style="color: #64748b;">Análisis de respuestas por encuesta</p>
+                    </div>
+                    <select id="estadisticaSelect" class="form-control" style="width: 300px;" onchange="cargarEstadisticasEncuesta()">
+                        <option value="">Selecciona una encuesta</option>
+                    </select>
+                </div>
+
+                <div id="estadisticasContainer" style="display: none;">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div style="color: #64748b;">Total Respuestas</div>
+                            <div class="stat-value" id="totalRespuestas">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div style="color: #64748b;">Tasa de Completado</div>
+                            <div class="stat-value" id="tasaCompletado">0%</div>
+                        </div>
+                    </div>
+
+                    <div class="charts-grid">
+                        <div class="chart-card">
+                            <h3 id="chart1Title">Distribución de Respuestas</h3>
+                            <canvas id="respuestasPorPreguntaChart"></canvas>
+                        </div>
+                        <div class="chart-card">
+                            <h3 id="chart2Title">Evolución de Respuestas</h3>
+                            <canvas id="respuestasTiempoChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div style="background: white; border-radius: var(--border-radius); padding: 1.5rem; margin-top: 1.5rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                            <h3>Respuestas Individuales</h3>
+                            <div>
+                                <button class="btn btn-outline" onclick="exportarExcel()">
+                                    <span>📊</span> Exportar Excel
+                                </button>
+                                <button class="btn btn-outline" onclick="exportarPDF()">
+                                    <span>📄</span> Exportar PDF
+                                </button>
+                            </div>
+                        </div>
+                        <div id="respuestasTableContainer"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: Plantillas -->
+            <div id="view-plantillas" class="view">
+                <div class="view-header">
+                    <div>
+                        <h1 class="view-title">Plantillas</h1>
+                        <p style="color: #64748b;">Usa plantillas predefinidas para crear encuestas rápidamente</p>
+                    </div>
+                </div>
+
+                <div class="surveys-grid">
+                    <div class="survey-card">
+                        <div style="font-size: 2rem; margin-bottom: 1rem;">📚</div>
+                        <h3 class="survey-title">Evaluación Docente</h3>
+                        <p style="color: #64748b; margin: 1rem 0;">Plantilla estándar para evaluación del desempeño docente</p>
+                        <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
+                            <span class="badge badge-info">12 preguntas</span>
+                            <span class="badge badge-success">Escala Likert</span>
+                        </div>
+                        <button class="btn btn-primary" style="width: 100%;" onclick="usarPlantilla('docente')">
+                            Usar Plantilla
+                        </button>
+                    </div>
+
+                    <div class="survey-card">
+                        <div style="font-size: 2rem; margin-bottom: 1rem;">🎓</div>
+                        <h3 class="survey-title">Satisfacción Estudiantil</h3>
+                        <p style="color: #64748b; margin: 1rem 0;">Evalúa la satisfacción de los estudiantes con los servicios</p>
+                        <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
+                            <span class="badge badge-info">15 preguntas</span>
+                            <span class="badge badge-success">Mixta</span>
+                        </div>
+                        <button class="btn btn-primary" style="width: 100%;" onclick="usarPlantilla('estudiantes')">
+                            Usar Plantilla
+                        </button>
+                    </div>
+
+                    <div class="survey-card">
+                        <div style="font-size: 2rem; margin-bottom: 1rem;">👔</div>
+                        <h3 class="survey-title">Clima Organizacional</h3>
+                        <p style="color: #64748b; margin: 1rem 0;">Evalúa el clima laboral en tu facultad</p>
+                        <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
+                            <span class="badge badge-info">20 preguntas</span>
+                            <span class="badge badge-success">Likert</span>
+                        </div>
+                        <button class="btn btn-primary" style="width: 100%;" onclick="usarPlantilla('clima')">
+                            Usar Plantilla
+                        </button>
+                    </div>
+
+                    <div class="survey-card">
+                        <div style="font-size: 2rem; margin-bottom: 1rem;">🎯</div>
+                        <h3 class="survey-title">Egresados</h3>
+                        <p style="color: #64748b; margin: 1rem 0;">Seguimiento de egresados e inserción laboral</p>
+                        <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
+                            <span class="badge badge-info">18 preguntas</span>
+                            <span class="badge badge-success">Mixta</span>
+                        </div>
+                        <button class="btn btn-primary" style="width: 100%;" onclick="usarPlantilla('egresados')">
+                            Usar Plantilla
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: Bitácora -->
+            <div id="view-bitacora" class="view">
+                <div class="view-header">
+                    <div>
+                        <h1 class="view-title">Bitácora de Actividades</h1>
+                        <p style="color: #64748b;">Registro de todas las acciones en el sistema</p>
+                    </div>
+                    <button class="btn btn-outline" onclick="exportarBitacora()">
+                        <span>📊</span> Exportar Bitácora
+                    </button>
+                </div>
+
+                <div class="logs-container" id="bitacoraContainer">
+                    <!-- Se llena dinámicamente -->
+                </div>
+            </div>
+
+            <!-- VIEW: Usuarios -->
+            <div id="view-usuarios" class="view">
+                <div class="view-header">
+                    <div>
+                        <h1 class="view-title">Usuarios</h1>
+                        <p style="color: #64748b;">Administración de usuarios del sistema</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="openModal('usuarioModal')">
+                        <span>➕</span> Nuevo Usuario
+                    </button>
+                </div>
+
+                <div style="background: white; border-radius: var(--border-radius); overflow: hidden;">
+                    <table style="width: 100%;">
+                        <thead>
+                            <tr>
+                                <th style="padding: 1rem 1.5rem; text-align: left;">Usuario</th>
+                                <th style="padding: 1rem 1.5rem; text-align: left;">Email</th>
+                                <th style="padding: 1rem 1.5rem; text-align: left;">Rol</th>
+                                <th style="padding: 1rem 1.5rem; text-align: left;">Estado</th>
+                                <th style="padding: 1rem 1.5rem; text-align: left;">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usuariosList">
+                            <!-- Se llena dinámicamente -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- MODAL: Constructor de Encuestas -->
+    <div id="encuestaModal" class="modal modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 style="color: var(--uaemex-dark);" id="encuestaModalTitle">Crear Nueva Encuesta</h2>
+                <button class="close-modal" onclick="closeModal('encuestaModal')">&times;</button>
+            </div>
+            
+            <div class="form-builder">
+                <div class="form-editor">
+                    <div style="margin-bottom: 2rem;">
+                        <input type="text" id="formTitle" class="form-control" placeholder="Título de la encuesta" value="Encuesta sin título">
+                        <textarea id="formDescription" class="form-control" placeholder="Descripción" style="margin-top: 1rem; height: 100px;"></textarea>
+                        <input type="hidden" id="editingSurveyId" value="">
+                    </div>
+
+                    <div style="background: var(--uaemex-light); padding: 1.5rem; border-radius: var(--border-radius); margin-bottom: 2rem;">
+                        <h3 style="margin-bottom: 1rem; color: var(--uaemex-dark);">⚙️ Configuración de la Encuesta</h3>
+                        
+                        <div class="settings-grid">
+                            <div class="setting-item">
+                                <span style="display: flex; align-items: center; gap: 0.5rem;">
+                                    <span style="font-size: 1.1rem;">🔒</span> Evaluación anónima
+                                </span>
+                                <label class="switch">
+                                    <input type="checkbox" id="anonymousSetting" onchange="updatePreview()">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            
+                            <div class="setting-item">
+                                <span style="display: flex; align-items: center; gap: 0.5rem;">
+                                    <span style="font-size: 1.1rem;">📝</span> Guardar nombres participantes
+                                </span>
+                                <label class="switch">
+                                    <input type="checkbox" id="saveNamesSetting" onchange="updatePreview()">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            
+                            <div class="setting-item">
+                                <span style="display: flex; align-items: center; gap: 0.5rem;">
+                                    <span style="font-size: 1.1rem;">📧</span> Solicitar correo institucional
+                                </span>
+                                <label class="switch">
+                                    <input type="checkbox" id="emailSetting" onchange="updatePreview()">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            
+                            <div class="setting-item">
+                                <span style="display: flex; align-items: center; gap: 0.5rem;">
+                                    <span style="font-size: 1.1rem;">⏰</span> Permitir múltiples respuestas
+                                </span>
+                                <label class="switch">
+                                    <input type="checkbox" id="multipleResponsesSetting" onchange="updatePreview()">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <h3>📋 Preguntas</h3>
+                        <button class="btn btn-primary" type="button" onclick="addQuestion()">
+                            <span>➕</span> Agregar pregunta
+                        </button>
+                    </div>
+
+                    <div id="questions-container"></div>
+                </div>
+
+                <div class="form-preview">
+                    <h3 style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <span>👁️</span> Vista Previa
+                    </h3>
+                    <div id="formPreview" style="background: white; padding: 1.5rem; border-radius: 12px; box-shadow: var(--shadow-sm);">
+                        <!-- Vista previa dinámica -->
+                    </div>
+                    
+                    <div style="margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #e2e8f0;">
+                        <h4 style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                            <span>🔗</span> Enlace Público
+                        </h4>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <input type="text" id="publicLinkPreview" class="form-control" readonly value="https://encuestas.uaemex.mx/e/abc123">
+                            <button class="btn btn-outline" onclick="copiarEnlace()">📋 Copiar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #e2e8f0;">
+                <button class="btn btn-outline" onclick="closeModal('encuestaModal')">Cancelar</button>
+                <button class="btn btn-primary" onclick="guardarEncuesta()">Guardar Encuesta</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Vista Pública de Encuesta -->
+    <div id="verEncuestaModal" class="modal modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 style="color: var(--uaemex-dark);" id="verEncuestaTitle">Vista de Encuesta</h2>
+                <button class="close-modal" onclick="closeModal('verEncuestaModal')">&times;</button>
+            </div>
+            
+            <div id="verEncuestaContent" style="background: white; border-radius: var(--border-radius); padding: 1rem;">
+                <!-- Contenido dinámico de la encuesta -->
+            </div>
+            
+            <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #e2e8f0;">
+                <button class="btn btn-outline" onclick="closeModal('verEncuestaModal')">Cerrar</button>
+                <button class="btn btn-primary" onclick="alert('Funcionalidad de envío de respuestas - Demo')">Enviar respuestas</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Usuario -->
+    <div id="usuarioModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 style="color: var(--uaemex-dark);" id="usuarioModalTitle">Nuevo Usuario</h2>
+                <button class="close-modal" onclick="closeModal('usuarioModal')">&times;</button>
+            </div>
+            
+            <form id="usuarioForm" onsubmit="event.preventDefault(); guardarUsuario();">
+                <input type="hidden" id="userId">
+                
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label>Nombre completo</label>
+                    <input type="text" id="userName" class="form-control" required>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label>Email</label>
+                    <input type="email" id="userEmail" class="form-control" required>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label>Contraseña</label>
+                    <input type="password" id="userPassword" class="form-control" required>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label>Rol</label>
+                    <select id="userRole" class="form-control">
+                        <option value="admin">Administrador</option>
+                        <option value="editor">Editor</option>
+                        <option value="viewer">Solo vista</option>
+                    </select>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label>Estado</label>
+                    <select id="userStatus" class="form-control">
+                        <option value="active">Activo</option>
+                        <option value="inactive">Inactivo</option>
+                    </select>
+                </div>
+
+                <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 2rem;">
+                    <button type="button" class="btn btn-outline" onclick="closeModal('usuarioModal')">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // ==================== DATOS INICIALES ====================
+        let encuestas = JSON.parse(localStorage.getItem('uaemex_encuestas') || '[]');
+        let usuarios = JSON.parse(localStorage.getItem('uaemex_usuarios') || '[]');
+        let respuestas = JSON.parse(localStorage.getItem('uaemex_respuestas') || '[]');
+        let bitacora = JSON.parse(localStorage.getItem('uaemex_bitacora') || '[]');
+        let currentUser = null;
+        let currentQuestions = [];
+        let editingSurveyId = null;
+        let charts = {};
+
+        // ==================== AUTENTICACIÓN ====================
+        function login() {
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            if (username === 'admin@uaemex.mx' && password === 'admin123') {
+                currentUser = {
+                    id: 1,
+                    name: 'Administrador',
+                    email: 'admin@uaemex.mx',
+                    role: 'admin'
+                };
+                
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('app').classList.add('logged-in');
+                document.getElementById('userName').textContent = currentUser.name;
+                document.getElementById('userRole').textContent = 'Administrador';
+                document.getElementById('userInitials').textContent = 'AD';
+                
+                agregarBitacora('login', 'Inicio de sesión exitoso');
+                inicializarDatos();
+                renderDashboard();
+                renderEncuestas();
+                renderUsuarios();
+                renderBitacora();
+            } else {
+                alert('Credenciales incorrectas');
+            }
+        }
+
+        function logout() {
+            agregarBitacora('logout', 'Cierre de sesión');
+            currentUser = null;
+            document.getElementById('loginScreen').style.display = 'flex';
+            document.getElementById('app').classList.remove('logged-in');
+        }
+
+        // ==================== BITÁCORA ====================
+        function agregarBitacora(accion, detalle) {
+            const entry = {
+                id: Date.now(),
+                timestamp: new Date().toISOString(),
+                usuario: currentUser ? currentUser.email : 'sistema',
+                accion: accion,
+                detalle: detalle
+            };
+            
+            bitacora.unshift(entry);
+            localStorage.setItem('uaemex_bitacora', JSON.stringify(bitacora));
+            renderBitacora();
+        }
+
+        function renderBitacora() {
+            const container = document.getElementById('bitacoraContainer');
+            if (!container) return;
+            
+            container.innerHTML = bitacora.slice(0, 50).map(log => `
+                <div class="log-entry">
+                    <div class="log-time">${new Date(log.timestamp).toLocaleString()}</div>
+                    <div>
+                        <span class="badge badge-info">${log.accion}</span>
+                        <span style="margin-left: 1rem;">${log.detalle}</span>
+                        <div style="font-size: 0.75rem; color: #64748b; margin-top: 0.25rem;">
+                            Usuario: ${log.usuario}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            
+            if (bitacora.length === 0) {
+                container.innerHTML = '<div style="text-align: center; padding: 3rem; color: #64748b;">No hay actividades registradas</div>';
+            }
+        }
+
+        function exportarBitacora() {
+            const data = bitacora.map(log => ({
+                Fecha: new Date(log.timestamp).toLocaleString(),
+                Usuario: log.usuario,
+                Acción: log.accion,
+                Detalle: log.detalle
+            }));
+            
+            const ws = XLSX.utils.json_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Bitácora');
+            XLSX.writeFile(wb, `bitacora_${new Date().toISOString().split('T')[0]}.xlsx`);
+            
+            agregarBitacora('exportar', 'Exportó la bitácora');
+        }
+
+        // ==================== INICIALIZACIÓN ====================
+        function inicializarDatos() {
+            if (usuarios.length === 0) {
+                usuarios = [{
+                    id: 1,
+                    name: 'Administrador',
+                    email: 'admin@uaemex.mx',
+                    password: 'admin123',
+                    role: 'admin',
+                    status: 'active'
+                }];
+                localStorage.setItem('uaemex_usuarios', JSON.stringify(usuarios));
+            }
+            
+            if (encuestas.length === 0) {
+                const encuestaEjemplo = {
+                    id: 'survey_' + Date.now(),
+                    title: 'Evaluación Docente 2025A',
+                    description: 'Evaluación del desempeño docente - Período 2025A',
+                    status: 'active',
+                    publicUrl: 'encuesta_' + Math.random().toString(36).substr(2, 8),
+                    settings: {
+                        anonymous: true,
+                        saveNames: false,
+                        requireEmail: true,
+                        multipleResponses: false
+                    },
+                    questions: [
+                        {
+                            id: 'q1',
+                            type: 'linear',
+                            title: '¿Cómo calificas el dominio del tema?',
+                            required: true
+                        },
+                        {
+                            id: 'q2',
+                            type: 'multiple',
+                            title: '¿Qué aspectos mejorarías?',
+                            required: true,
+                            options: ['Metodología', 'Material didáctico', 'Puntualidad', 'Evaluaciones']
+                        }
+                    ],
+                    created: new Date().toLocaleDateString(),
+                    responses: 45,
+                    totalResponses: 60
+                };
+                encuestas.push(encuestaEjemplo);
+                localStorage.setItem('uaemex_encuestas', JSON.stringify(encuestas));
+            }
+            
+            if (respuestas.length === 0 && encuestas.length > 0) {
+                for (let i = 0; i < 45; i++) {
+                    respuestas.push({
+                        id: 'resp_' + Date.now() + i,
+                        surveyId: encuestas[0].id,
+                        fecha: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
+                        respuestas: [
+                            { preguntaId: 'q1', valor: Math.floor(Math.random() * 5) + 1 },
+                            { preguntaId: 'q2', valor: ['Metodología', 'Evaluaciones'][Math.floor(Math.random() * 2)] }
+                        ]
+                    });
+                }
+                localStorage.setItem('uaemex_respuestas', JSON.stringify(respuestas));
+            }
+        }
+
+        // ==================== ENCUESTAS ====================
+        function renderEncuestas() {
+            const grid = document.getElementById('encuestasGrid');
+            const recentGrid = document.getElementById('recentSurveys');
+            
+            if (grid) {
+                grid.innerHTML = encuestas.map(encuesta => crearTarjetaEncuesta(encuesta)).join('');
+            }
+            
+            if (recentGrid) {
+                recentGrid.innerHTML = encuestas.slice(0, 3).map(encuesta => crearTarjetaEncuesta(encuesta)).join('');
+            }
+            
+            const select = document.getElementById('estadisticaSelect');
+            if (select) {
+                select.innerHTML = '<option value="">Selecciona una encuesta</option>' + 
+                    encuestas.map(e => `<option value="${e.id}">${e.title}</option>`).join('');
+            }
+            
+            renderDashboard();
+        }
+
+        function crearTarjetaEncuesta(encuesta) {
+            return `
+                <div class="survey-card">
+                    <div class="survey-header">
+                        <h3 class="survey-title">${encuesta.title}</h3>
+                        <span class="survey-status ${encuesta.status === 'active' ? 'status-active' : 'status-inactive'}">
+                            ${encuesta.status === 'active' ? 'Activa' : 'Inactiva'}
+                        </span>
+                    </div>
+                    
+                    <p style="color: #64748b; margin-bottom: 1rem;">${encuesta.description || 'Sin descripción'}</p>
+                    
+                    <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap;">
+                        ${encuesta.settings?.anonymous ? '<span class="badge badge-info">🔒 Anónima</span>' : ''}
+                        ${encuesta.settings?.saveNames ? '<span class="badge badge-info">📝 Guarda nombres</span>' : ''}
+                        ${encuesta.settings?.requireEmail ? '<span class="badge badge-info">📧 Solicita correo</span>' : ''}
+                        ${encuesta.settings?.multipleResponses ? '<span class="badge badge-info">⏰ Múltiples respuestas</span>' : ''}
+                    </div>
+                    
+                    <div class="survey-stats">
+                        <div>
+                            <div style="font-size: 1.5rem; font-weight: 700;">${encuesta.responses || 0}</div>
+                            <div style="font-size: 0.75rem; color: #64748b;">Respuestas</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 1.5rem; font-weight: 700;">${encuesta.questions?.length || 0}</div>
+                            <div style="font-size: 0.75rem; color: #64748b;">Preguntas</div>
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+                        <button class="btn btn-outline" style="flex: 1;" onclick="verEncuesta('${encuesta.id}')">
+                            👁️ Ver
+                        </button>
+                        <button class="btn btn-outline" style="flex: 1;" onclick="editarEncuesta('${encuesta.id}')">
+                            ✏️ Editar
+                        </button>
+                    </div>
+                    
+                    <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+                        <button class="btn ${encuesta.status === 'active' ? 'btn-warning' : 'btn-success'}" 
+                                style="flex: 1;" 
+                                onclick="toggleEncuestaStatus('${encuesta.id}')">
+                            ${encuesta.status === 'active' ? '🔴 Deshabilitar' : '🟢 Habilitar'}
+                        </button>
+                    </div>
+                    
+                    <div class="survey-link">
+                        <span>🔗</span>
+                        <input type="text" value="encuesta_${encuesta.publicUrl || encuesta.id}" readonly id="link_${encuesta.id}">
+                        <button class="btn btn-outline" style="padding: 0.25rem 0.75rem;" onclick="copiarTexto('link_${encuesta.id}')">
+                            📋
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function toggleEncuestaStatus(encuestaId) {
+            const encuesta = encuestas.find(e => e.id === encuestaId);
+            if (encuesta) {
+                encuesta.status = encuesta.status === 'active' ? 'inactive' : 'active';
+                localStorage.setItem('uaemex_encuestas', JSON.stringify(encuestas));
+                agregarBitacora('encuesta', `${encuesta.status === 'active' ? 'Habilitó' : 'Deshabilitó'} encuesta: ${encuesta.title}`);
+                renderEncuestas();
+                renderDashboard();
+            }
+        }
+
+        function verEncuesta(encuestaId) {
+            const encuesta = encuestas.find(e => e.id === encuestaId);
+            if (encuesta) {
+                document.getElementById('verEncuestaTitle').textContent = encuesta.title;
+                
+                let settingsHTML = '';
+                if (encuesta.settings?.anonymous || encuesta.settings?.saveNames || encuesta.settings?.requireEmail || encuesta.settings?.multipleResponses) {
+                    settingsHTML = '<div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1.5rem;">';
+                    if (encuesta.settings?.anonymous) settingsHTML += '<span class="badge badge-info">🔒 Encuesta anónima</span>';
+                    if (encuesta.settings?.saveNames) settingsHTML += '<span class="badge badge-info">📝 Se guardarán los nombres</span>';
+                    if (encuesta.settings?.requireEmail) settingsHTML += '<span class="badge badge-info">📧 Requiere correo institucional</span>';
+                    if (encuesta.settings?.multipleResponses) settingsHTML += '<span class="badge badge-info">⏰ Permite múltiples respuestas</span>';
+                    settingsHTML += '</div>';
+                }
+                
+                let preguntasHTML = encuesta.questions.map((q, index) => `
+                    <div class="public-survey-question">
+                        <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
+                            <span style="font-weight: 600; color: var(--uaemex-dark);">${index + 1}. ${q.title}</span>
+                            ${q.required ? '<span style="color: var(--danger); font-size: 0.75rem;">*Obligatoria</span>' : ''}
+                        </div>
+                        ${renderPublicPreviewOptions(q)}
+                    </div>
+                `).join('');
+                
+                const content = `
+                    <div class="public-survey">
+                        <div class="public-survey-header">
+                            <h2 style="margin-bottom: 0.5rem;">${encuesta.title}</h2>
+                            ${encuesta.description ? `<p style="opacity: 0.9;">${encuesta.description}</p>` : ''}
+                            ${settingsHTML}
+                        </div>
+                        
+                        ${preguntasHTML || '<div style="text-align: center; padding: 3rem; color: #64748b;">Esta encuesta no tiene preguntas</div>'}
+                    </div>
+                `;
+                
+                document.getElementById('verEncuestaContent').innerHTML = content;
+                openModal('verEncuestaModal');
+            }
+        }
+
+        function renderPublicPreviewOptions(question) {
+            if (question.type === 'text') {
+                return '<input type="text" class="form-control" placeholder="Respuesta corta">';
+            }
+            if (question.type === 'textarea') {
+                return '<textarea class="form-control" placeholder="Respuesta larga" rows="3"></textarea>';
+            }
+            if (question.type === 'multiple') {
+                return question.options.map(opt => `
+                    <div style="margin-bottom: 0.5rem;">
+                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="radio" name="q_${question.id}" style="accent-color: var(--uaemex-green);"> ${opt}
+                        </label>
+                    </div>
+                `).join('');
+            }
+            if (question.type === 'checkbox') {
+                return question.options.map(opt => `
+                    <div style="margin-bottom: 0.5rem;">
+                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="checkbox" style="accent-color: var(--uaemex-green);"> ${opt}
+                        </label>
+                    </div>
+                `).join('');
+            }
+            if (question.type === 'linear') {
+                return `
+                    <div style="display: flex; gap: 1.5rem; align-items: center; flex-wrap: wrap;">
+                        ${[1,2,3,4,5].map(n => `
+                            <label style="display: flex; flex-direction: column; align-items: center; gap: 0.25rem;">
+                                <input type="radio" name="q_${question.id}" style="accent-color: var(--uaemex-green);"> 
+                                <span style="font-size: 0.875rem;">${n}</span>
+                            </label>
+                        `).join('')}
+                    </div>
+                `;
+            }
+            return '';
+        }
+
+        function editarEncuesta(encuestaId) {
+            const encuesta = encuestas.find(e => e.id === encuestaId);
+            if (encuesta) {
+                editingSurveyId = encuesta.id;
+                document.getElementById('encuestaModalTitle').textContent = 'Editar Encuesta';
+                document.getElementById('editingSurveyId').value = encuesta.id;
+                
+                currentQuestions = JSON.parse(JSON.stringify(encuesta.questions || []));
+                document.getElementById('formTitle').value = encuesta.title;
+                document.getElementById('formDescription').value = encuesta.description || '';
+                document.getElementById('anonymousSetting').checked = encuesta.settings?.anonymous || false;
+                document.getElementById('saveNamesSetting').checked = encuesta.settings?.saveNames || false;
+                document.getElementById('emailSetting').checked = encuesta.settings?.requireEmail || false;
+                document.getElementById('multipleResponsesSetting').checked = encuesta.settings?.multipleResponses || false;
+                
+                renderQuestions();
+                updatePreview();
+                openModal('encuestaModal');
+            }
+        }
+
+        // ==================== CONSTRUCTOR DE ENCUESTAS ====================
+        function addQuestion(type = 'multiple') {
+            const question = {
+                id: 'q_' + Date.now() + '_' + Math.random(),
+                type: type,
+                title: 'Pregunta sin título',
+                required: false,
+                options: ['Opción 1']
+            };
+            currentQuestions.push(question);
+            renderQuestions();
+            updatePreview();
+        }
+
+        function renderQuestions() {
+            const container = document.getElementById('questions-container');
+            if (!container) return;
+            
+            container.innerHTML = currentQuestions.map((q, index) => `
+                <div class="question-card">
+                    <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+                        <input type="text" class="form-control" value="${q.title}" 
+                               onchange="updateQuestion('${q.id}', 'title', this.value)"
+                               placeholder="Escribe tu pregunta">
+                        <select class="form-control" style="width: 200px;" onchange="changeQuestionType('${q.id}', this.value)">
+                            <option value="multiple" ${q.type === 'multiple' ? 'selected' : ''}>Opción múltiple</option>
+                            <option value="checkbox" ${q.type === 'checkbox' ? 'selected' : ''}>Casillas</option>
+                            <option value="text" ${q.type === 'text' ? 'selected' : ''}>Texto corto</option>
+                            <option value="textarea" ${q.type === 'textarea' ? 'selected' : ''}>Párrafo</option>
+                            <option value="linear" ${q.type === 'linear' ? 'selected' : ''}>Escala lineal</option>
+                        </select>
+                    </div>
+                    
+                    ${renderQuestionOptions(q)}
+                    
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem;">
+                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="checkbox" ${q.required ? 'checked' : ''} 
+                                   onchange="updateQuestion('${q.id}', 'required', this.checked)">
+                            Obligatoria
+                        </label>
+                        
+                        <div>
+                            <button class="btn btn-outline" style="padding: 0.5rem;" onclick="duplicateQuestion('${q.id}')">📋</button>
+                            <button class="btn btn-outline" style="padding: 0.5rem; color: var(--danger);" onclick="deleteQuestion('${q.id}')">🗑️</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderQuestionOptions(question) {
+            if (question.type === 'text' || question.type === 'textarea') {
+                return '<div style="color: #94a3b8; padding: 0.5rem;">Respuesta de texto</div>';
+            }
+            
+            if (question.type === 'linear') {
+                return `
+                    <div style="padding: 0.5rem 0;">
+                        <label>Escala: 1 - 5</label>
+                    </div>
+                `;
+            }
+            
+            return `
+                <div class="question-options">
+                    ${question.options.map((opt, idx) => `
+                        <div class="option-row">
+                            <span>${question.type === 'multiple' ? '◉' : '☐'}</span>
+                            <input type="text" class="form-control" value="${opt}" 
+                                   onchange="updateOption('${question.id}', ${idx}, this.value)">
+                            <button style="background: none; border: none; color: #94a3b8; cursor: pointer;" 
+                                    onclick="removeOption('${question.id}', ${idx})">✕</button>
+                        </div>
+                    `).join('')}
+                    
+                    <button class="btn btn-outline" style="margin-top: 0.5rem;" onclick="addOption('${question.id}')">
+                        + Agregar opción
+                    </button>
+                </div>
+            `;
+        }
+
+        function updateQuestion(questionId, field, value) {
+            const question = currentQuestions.find(q => q.id === questionId);
+            if (question) {
+                question[field] = value;
+                updatePreview();
+            }
+        }
+
+        function updateOption(questionId, index, value) {
+            const question = currentQuestions.find(q => q.id === questionId);
+            if (question && question.options) {
+                question.options[index] = value;
+                updatePreview();
+            }
+        }
+
+        function addOption(questionId) {
+            const question = currentQuestions.find(q => q.id === questionId);
+            if (question) {
+                question.options.push(`Opción ${question.options.length + 1}`);
+                renderQuestions();
+                updatePreview();
+            }
+        }
+
+        function removeOption(questionId, index) {
+            const question = currentQuestions.find(q => q.id === questionId);
+            if (question && question.options.length > 1) {
+                question.options.splice(index, 1);
+                renderQuestions();
+                updatePreview();
+            }
+        }
+
+        function changeQuestionType(questionId, type) {
+            const question = currentQuestions.find(q => q.id === questionId);
+            if (question) {
+                question.type = type;
+                if (type === 'multiple' || type === 'checkbox') {
+                    question.options = question.options || ['Opción 1'];
+                }
+                renderQuestions();
+                updatePreview();
+            }
+        }
+
+        function duplicateQuestion(questionId) {
+            const question = currentQuestions.find(q => q.id === questionId);
+            if (question) {
+                const duplicate = JSON.parse(JSON.stringify(question));
+                duplicate.id = 'q_' + Date.now() + '_' + Math.random();
+                duplicate.title = duplicate.title + ' (copia)';
+                currentQuestions.push(duplicate);
+                renderQuestions();
+                updatePreview();
+            }
+        }
+
+        function deleteQuestion(questionId) {
+            currentQuestions = currentQuestions.filter(q => q.id !== questionId);
+            renderQuestions();
+            updatePreview();
+        }
+
+        function updatePreview() {
+            const preview = document.getElementById('formPreview');
+            if (!preview) return;
+            
+            const title = document.getElementById('formTitle')?.value || 'Encuesta sin título';
+            const description = document.getElementById('formDescription')?.value || '';
+            const anonymous = document.getElementById('anonymousSetting')?.checked || false;
+            const saveNames = document.getElementById('saveNamesSetting')?.checked || false;
+            const requireEmail = document.getElementById('emailSetting')?.checked || false;
+            const multipleResponses = document.getElementById('multipleResponsesSetting')?.checked || false;
+            
+            let settingsHTML = '';
+            if (anonymous || saveNames || requireEmail || multipleResponses) {
+                settingsHTML = '<div style="margin-top: 0.5rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">';
+                if (anonymous) settingsHTML += '<span class="badge badge-info">🔒 Anónima</span>';
+                if (saveNames) settingsHTML += '<span class="badge badge-info">📝 Guarda nombres</span>';
+                if (requireEmail) settingsHTML += '<span class="badge badge-info">📧 Solicita correo</span>';
+                if (multipleResponses) settingsHTML += '<span class="badge badge-info">⏰ Múltiples respuestas</span>';
+                settingsHTML += '</div>';
+            }
+            
+            preview.innerHTML = `
+                <div style="background: var(--uaemex-light); padding: 1.5rem; border-radius: 8px; margin-bottom: 1.5rem;">
+                    <h2 style="color: var(--uaemex-dark); margin-bottom: 0.5rem; font-size: 1.5rem;">${title}</h2>
+                    ${description ? `<p style="color: #1e293b; margin-bottom: 0.5rem;">${description}</p>` : ''}
+                    ${settingsHTML}
+                </div>
+                
+                ${currentQuestions.map((q, index) => `
+                    <div style="background: white; padding: 1.5rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid #e2e8f0;">
+                        <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
+                            <span style="font-weight: 600; color: var(--uaemex-dark);">${index + 1}. ${q.title || 'Pregunta sin título'}</span>
+                            ${q.required ? '<span style="color: var(--danger); font-size: 0.75rem;">*Obligatoria</span>' : ''}
+                        </div>
+                        ${renderPreviewOptions(q)}
+                    </div>
+                `).join('')}
+                
+                ${currentQuestions.length === 0 ? `
+                    <div style="text-align: center; padding: 3rem; background: white; border-radius: 8px; color: #64748b;">
+                        <span style="font-size: 3rem; display: block; margin-bottom: 1rem;">📝</span>
+                        <p>Agrega preguntas para ver la vista previa de la encuesta</p>
+                    </div>
+                ` : ''}
+                
+                <div style="margin-top: 1.5rem; padding: 1rem; background: white; border-radius: 8px; border: 1px solid #e2e8f0;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="color: #64748b;">${currentQuestions.length} preguntas</span>
+                        <button class="btn btn-primary" style="padding: 0.5rem 1rem;" disabled>Enviar respuestas</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderPreviewOptions(question) {
+            if (question.type === 'text') {
+                return '<input type="text" class="form-control" placeholder="Respuesta corta" disabled style="background: #f8fafc;">';
+            }
+            if (question.type === 'textarea') {
+                return '<textarea class="form-control" placeholder="Respuesta larga" rows="3" disabled style="background: #f8fafc;"></textarea>';
+            }
+            if (question.type === 'multiple') {
+                return question.options.map(opt => `
+                    <div style="margin-bottom: 0.5rem;">
+                        <label style="display: flex; align-items: center; gap: 0.5rem; color: #1e293b;">
+                            <input type="radio" disabled style="accent-color: var(--uaemex-green);"> ${opt}
+                        </label>
+                    </div>
+                `).join('');
+            }
+            if (question.type === 'checkbox') {
+                return question.options.map(opt => `
+                    <div style="margin-bottom: 0.5rem;">
+                        <label style="display: flex; align-items: center; gap: 0.5rem; color: #1e293b;">
+                            <input type="checkbox" disabled style="accent-color: var(--uaemex-green);"> ${opt}
+                        </label>
+                    </div>
+                `).join('');
+            }
+            if (question.type === 'linear') {
+                return `
+                    <div style="display: flex; gap: 1.5rem; align-items: center; flex-wrap: wrap;">
+                        ${[1,2,3,4,5].map(n => `
+                            <label style="display: flex; flex-direction: column; align-items: center; gap: 0.25rem;">
+                                <input type="radio" disabled style="accent-color: var(--uaemex-green);"> 
+                                <span style="font-size: 0.875rem;">${n}</span>
+                            </label>
+                        `).join('')}
+                    </div>
+                `;
+            }
+            return '';
+        }
+
+        function guardarEncuesta() {
+            const title = document.getElementById('formTitle').value;
+            const description = document.getElementById('formDescription').value;
+            const editingId = document.getElementById('editingSurveyId').value;
+            
+            if (editingId) {
+                // Actualizar encuesta existente
+                const index = encuestas.findIndex(e => e.id === editingId);
+                if (index !== -1) {
+                    encuestas[index] = {
+                        ...encuestas[index],
+                        title: title,
+                        description: description,
+                        questions: currentQuestions,
+                        settings: {
+                            anonymous: document.getElementById('anonymousSetting').checked,
+                            saveNames: document.getElementById('saveNamesSetting').checked,
+                            requireEmail: document.getElementById('emailSetting').checked,
+                            multipleResponses: document.getElementById('multipleResponsesSetting').checked
+                        }
+                    };
+                    agregarBitacora('encuesta', `Actualizó encuesta: ${title}`);
+                }
+            } else {
+                // Crear nueva encuesta
+                const encuesta = {
+                    id: 'survey_' + Date.now(),
+                    title: title,
+                    description: description,
+                    questions: currentQuestions,
+                    settings: {
+                        anonymous: document.getElementById('anonymousSetting').checked,
+                        saveNames: document.getElementById('saveNamesSetting').checked,
+                        requireEmail: document.getElementById('emailSetting').checked,
+                        multipleResponses: document.getElementById('multipleResponsesSetting').checked
+                    },
+                    status: 'active',
+                    publicUrl: 'encuesta_' + Math.random().toString(36).substr(2, 8),
+                    created: new Date().toLocaleDateString(),
+                    responses: 0,
+                    totalResponses: 0
+                };
+                
+                encuestas.push(encuesta);
+                agregarBitacora('encuesta', `Creó encuesta: ${title} con ${currentQuestions.length} preguntas`);
+            }
+            
+            localStorage.setItem('uaemex_encuestas', JSON.stringify(encuestas));
+            
+            // Resetear formulario
+            document.getElementById('encuestaModalTitle').textContent = 'Crear Nueva Encuesta';
+            document.getElementById('editingSurveyId').value = '';
+            editingSurveyId = null;
+            
+            closeModal('encuestaModal');
+            renderEncuestas();
+        }
+
+        function usarPlantilla(tipo) {
+            currentQuestions = [];
+            editingSurveyId = null;
+            document.getElementById('encuestaModalTitle').textContent = 'Crear Nueva Encuesta';
+            document.getElementById('editingSurveyId').value = '';
+            
+            if (tipo === 'docente') {
+                document.getElementById('formTitle').value = 'Evaluación Docente';
+                document.getElementById('formDescription').value = 'Evalúa el desempeño de tus profesores';
+                document.getElementById('anonymousSetting').checked = true;
+                document.getElementById('saveNamesSetting').checked = false;
+                document.getElementById('emailSetting').checked = true;
+                document.getElementById('multipleResponsesSetting').checked = false;
+                
+                addQuestion('linear');
+                updateQuestion(currentQuestions[0].id, 'title', 'Dominio del tema');
+                
+                addQuestion('linear');
+                updateQuestion(currentQuestions[1].id, 'title', 'Claridad en la exposición');
+                
+                addQuestion('multiple');
+                updateQuestion(currentQuestions[2].id, 'title', 'Aspectos a mejorar');
+                currentQuestions[2].options = ['Metodología', 'Material didáctico', 'Puntualidad', 'Evaluaciones'];
+            }
+            
+            if (tipo === 'estudiantes') {
+                document.getElementById('formTitle').value = 'Satisfacción Estudiantil';
+                document.getElementById('formDescription').value = 'Evalúa tu experiencia en la facultad';
+                document.getElementById('anonymousSetting').checked = true;
+                document.getElementById('saveNamesSetting').checked = false;
+                document.getElementById('emailSetting').checked = true;
+                document.getElementById('multipleResponsesSetting').checked = false;
+                
+                addQuestion('linear');
+                updateQuestion(currentQuestions[0].id, 'title', 'Calidad de instalaciones');
+                
+                addQuestion('linear');
+                updateQuestion(currentQuestions[1].id, 'title', 'Servicios escolares');
+                
+                addQuestion('textarea');
+                updateQuestion(currentQuestions[2].id, 'title', 'Comentarios adicionales');
+            }
+            
+            if (tipo === 'clima') {
+                document.getElementById('formTitle').value = 'Clima Organizacional';
+                document.getElementById('formDescription').value = 'Evalúa el ambiente laboral';
+                document.getElementById('anonymousSetting').checked = true;
+                document.getElementById('saveNamesSetting').checked = false;
+                document.getElementById('emailSetting').checked = false;
+                document.getElementById('multipleResponsesSetting').checked = false;
+                
+                addQuestion('linear');
+                updateQuestion(currentQuestions[0].id, 'title', 'Satisfacción laboral');
+                
+                addQuestion('linear');
+                updateQuestion(currentQuestions[1].id, 'title', 'Comunicación interna');
+            }
+            
+            if (tipo === 'egresados') {
+                document.getElementById('formTitle').value = 'Seguimiento de Egresados';
+                document.getElementById('formDescription').value = '¿Cómo ha sido tu inserción laboral?';
+                document.getElementById('anonymousSetting').checked = false;
+                document.getElementById('saveNamesSetting').checked = true;
+                document.getElementById('emailSetting').checked = true;
+                document.getElementById('multipleResponsesSetting').checked = false;
+                
+                addQuestion('multiple');
+                updateQuestion(currentQuestions[0].id, 'title', 'Situación laboral actual');
+                currentQuestions[0].options = ['Trabajo relacionado', 'Trabajo no relacionado', 'Estudiando', 'Buscando empleo'];
+                
+                addQuestion('linear');
+                updateQuestion(currentQuestions[1].id, 'title', 'Satisfacción con la formación');
+            }
+            
+            renderQuestions();
+            updatePreview();
+            openModal('encuestaModal');
+        }
+
+        // ==================== ESTADÍSTICAS ====================
+        function cargarEstadisticasEncuesta() {
+            const surveyId = document.getElementById('estadisticaSelect').value;
+            if (!surveyId) {
+                document.getElementById('estadisticasContainer').style.display = 'none';
+                return;
+            }
+            
+            const encuesta = encuestas.find(e => e.id === surveyId);
+            const respuestasEncuesta = respuestas.filter(r => r.surveyId === surveyId);
+            
+            document.getElementById('totalRespuestas').textContent = respuestasEncuesta.length;
+            document.getElementById('tasaCompletado').textContent = 
+                encuesta.totalResponses ? Math.round((respuestasEncuesta.length / encuesta.totalResponses) * 100) + '%' : '0%';
+            
+            const ctx1 = document.getElementById('respuestasPorPreguntaChart').getContext('2d');
+            if (charts.respuestasPorPregunta) charts.respuestasPorPregunta.destroy();
+            
+            const respuestasPorPregunta = {};
+            respuestasEncuesta.forEach(r => {
+                r.respuestas.forEach(resp => {
+                    respuestasPorPregunta[resp.preguntaId] = (respuestasPorPregunta[resp.preguntaId] || 0) + 1;
+                });
+            });
+            
+            charts.respuestasPorPregunta = new Chart(ctx1, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(respuestasPorPregunta).map(k => `Pregunta ${k}`),
+                    datasets: [{
+                        label: 'Respuestas',
+                        data: Object.values(respuestasPorPregunta),
+                        backgroundColor: 'rgba(0, 103, 71, 0.6)'
+                    }]
+                }
+            });
+            
+            const ctx2 = document.getElementById('respuestasTiempoChart').getContext('2d');
+            if (charts.respuestasTiempo) charts.respuestasTiempo.destroy();
+            
+            const respuestasPorDia = {};
+            respuestasEncuesta.forEach(r => {
+                const dia = new Date(r.fecha).toLocaleDateString();
+                respuestasPorDia[dia] = (respuestasPorDia[dia] || 0) + 1;
+            });
+            
+            charts.respuestasTiempo = new Chart(ctx2, {
+                type: 'line',
+                data: {
+                    labels: Object.keys(respuestasPorDia).slice(-7),
+                    datasets: [{
+                        label: 'Respuestas por día',
+                        data: Object.values(respuestasPorDia).slice(-7),
+                        borderColor: 'rgba(185, 151, 92, 1)',
+                        tension: 0.4
+                    }]
+                }
+            });
+            
+            const tableContainer = document.getElementById('respuestasTableContainer');
+            tableContainer.innerHTML = `
+                <table style="width: 100%;">
+                    <thead>
+                        <tr>
+                            <th style="text-align: left; padding: 0.75rem;">Fecha</th>
+                            <th style="text-align: left; padding: 0.75rem;">Respuestas</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${respuestasEncuesta.slice(0, 10).map(r => `
+                            <tr>
+                                <td style="padding: 0.75rem;">${new Date(r.fecha).toLocaleString()}</td>
+                                <td style="padding: 0.75rem;">${r.respuestas.map(rr => rr.valor).join(', ')}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+            
+            document.getElementById('estadisticasContainer').style.display = 'block';
+        }
+
+        // ==================== EXPORTACIÓN ====================
+        function exportarExcel() {
+            const surveyId = document.getElementById('estadisticaSelect').value;
+            const encuesta = encuestas.find(e => e.id === surveyId);
+            const respuestasEncuesta = respuestas.filter(r => r.surveyId === surveyId);
+            
+            const data = respuestasEncuesta.map(r => ({
+                Fecha: new Date(r.fecha).toLocaleString(),
+                ...Object.fromEntries(r.respuestas.map(rr => [`Pregunta_${rr.preguntaId}`, rr.valor]))
+            }));
+            
+            const ws = XLSX.utils.json_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Respuestas');
+            XLSX.writeFile(wb, `${encuesta.title}_respuestas.xlsx`);
+            
+            agregarBitacora('exportar', `Exportó respuestas de: ${encuesta.title}`);
+        }
+
+        function exportarPDF() {
+            alert('Exportación a PDF - En un entorno real, aquí se generaría el PDF');
+            agregarBitacora('exportar', 'Exportó a PDF');
+        }
+
+        function copiarEnlace() {
+            const input = document.getElementById('publicLinkPreview');
+            input.select();
+            document.execCommand('copy');
+            alert('Enlace copiado al portapapeles');
+        }
+
+        function copiarTexto(elementId) {
+            const input = document.getElementById(elementId);
+            input.select();
+            document.execCommand('copy');
+            alert('Enlace copiado al portapapeles');
+        }
+
+        // ==================== DASHBOARD ====================
+        function renderDashboard() {
+            const statsContainer = document.getElementById('dashboardStats');
+            if (!statsContainer) return;
+            
+            const totalEncuestas = encuestas.length;
+            const activas = encuestas.filter(e => e.status === 'active').length;
+            const totalRespuestas = respuestas.length;
+            const tasaPromedio = encuestas.reduce((acc, e) => acc + (e.responses || 0), 0) / (encuestas.length || 1);
+            
+            statsContainer.innerHTML = `
+                <div class="stat-card">
+                    <div style="color: #64748b;">Encuestas Totales</div>
+                    <div class="stat-value">${totalEncuestas}</div>
+                    <div style="margin-top: 0.5rem; color: var(--uaemex-green);">${activas} activas</div>
+                </div>
+                <div class="stat-card">
+                    <div style="color: #64748b;">Respuestas</div>
+                    <div class="stat-value">${totalRespuestas}</div>
+                    <div style="margin-top: 0.5rem; color: var(--uaemex-gold);">+${Math.round(totalRespuestas * 0.15)} este mes</div>
+                </div>
+                <div class="stat-card">
+                    <div style="color: #64748b;">Promedio por Encuesta</div>
+                    <div class="stat-value">${Math.round(tasaPromedio)}</div>
+                </div>
+                <div class="stat-card">
+                    <div style="color: #64748b;">Tasa de Respuesta</div>
+                    <div class="stat-value">${Math.round((totalRespuestas / (encuestas.length * 50)) * 100)}%</div>
+                </div>
+            `;
+            
+            const ctx1 = document.getElementById('responsesChart')?.getContext('2d');
+            const ctx2 = document.getElementById('statusChart')?.getContext('2d');
+            
+            if (ctx1) {
+                if (charts.responses) charts.responses.destroy();
+                charts.responses = new Chart(ctx1, {
+                    type: 'bar',
+                    data: {
+                        labels: encuestas.slice(0, 5).map(e => e.title.substring(0, 20) + '...'),
+                        datasets: [{
+                            label: 'Respuestas',
+                            data: encuestas.slice(0, 5).map(e => e.responses || 0),
+                            backgroundColor: 'rgba(0, 103, 71, 0.6)'
+                        }]
+                    }
+                });
+            }
+            
+            if (ctx2) {
+                if (charts.status) charts.status.destroy();
+                charts.status = new Chart(ctx2, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Activas', 'Inactivas'],
+                        datasets: [{
+                            data: [
+                                encuestas.filter(e => e.status === 'active').length,
+                                encuestas.filter(e => e.status === 'inactive').length
+                            ],
+                            backgroundColor: ['rgba(0, 103, 71, 0.8)', 'rgba(185, 151, 92, 0.8)']
+                        }]
+                    }
+                });
+            }
+        }
+
+        // ==================== USUARIOS ====================
+        function renderUsuarios() {
+            const tbody = document.getElementById('usuariosList');
+            if (!tbody) return;
+            
+            tbody.innerHTML = usuarios.map(user => `
+                <tr>
+                    <td style="padding: 1rem 1.5rem;">
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <div style="width: 32px; height: 32px; background: ${user.role === 'admin' ? 'var(--uaemex-gold)' : 'var(--uaemex-green)'}; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600;">
+                                ${user.name.split(' ').map(n => n[0]).join('').substring(0,2)}
+                            </div>
+                            <div>
+                                <div style="font-weight: 600;">${user.name}</div>
+                                <div style="font-size: 0.75rem; color: #64748b;">${user.email}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td style="padding: 1rem 1.5rem;">${user.email}</td>
+                    <td style="padding: 1rem 1.5rem;">
+                        <span class="badge ${user.role === 'admin' ? 'badge-warning' : 'badge-info'}">
+                            ${user.role === 'admin' ? 'Administrador' : user.role === 'editor' ? 'Editor' : 'Solo vista'}
+                        </span>
+                    </td>
+                    <td style="padding: 1rem 1.5rem;">
+                        <span class="badge ${user.status === 'active' ? 'badge-success' : 'badge-danger'}">
+                            ${user.status === 'active' ? 'Activo' : 'Inactivo'}
+                        </span>
+                    </td>
+                    <td style="padding: 1rem 1.5rem;">
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button class="btn btn-outline" style="padding: 0.5rem;" onclick="editarUsuario(${user.id})">✏️</button>
+                            <button class="btn btn-outline" style="padding: 0.5rem; color: var(--danger);" onclick="eliminarUsuario(${user.id})">🗑️</button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function guardarUsuario() {
+            const userId = document.getElementById('userId').value;
+            const userData = {
+                id: userId ? parseInt(userId) : Date.now(),
+                name: document.getElementById('userName').value,
+                email: document.getElementById('userEmail').value,
+                password: document.getElementById('userPassword').value,
+                role: document.getElementById('userRole').value,
+                status: document.getElementById('userStatus').value
+            };
+            
+            if (userId) {
+                const index = usuarios.findIndex(u => u.id == userId);
+                if (index !== -1) usuarios[index] = userData;
+                agregarBitacora('usuario', `Actualizó usuario: ${userData.email}`);
+            } else {
+                usuarios.push(userData);
+                agregarBitacora('usuario', `Creó usuario: ${userData.email}`);
+            }
+            
+            localStorage.setItem('uaemex_usuarios', JSON.stringify(usuarios));
+            renderUsuarios();
+            closeModal('usuarioModal');
+        }
+
+        function editarUsuario(userId) {
+            const user = usuarios.find(u => u.id == userId);
+            if (user) {
+                document.getElementById('userId').value = user.id;
+                document.getElementById('userName').value = user.name;
+                document.getElementById('userEmail').value = user.email;
+                document.getElementById('userPassword').value = user.password;
+                document.getElementById('userRole').value = user.role;
+                document.getElementById('userStatus').value = user.status;
+                document.getElementById('usuarioModalTitle').textContent = 'Editar Usuario';
+                openModal('usuarioModal');
+            }
+        }
+
+        function eliminarUsuario(userId) {
+            if (confirm('¿Estás seguro de eliminar este usuario?')) {
+                const user = usuarios.find(u => u.id == userId);
+                usuarios = usuarios.filter(u => u.id != userId);
+                localStorage.setItem('uaemex_usuarios', JSON.stringify(usuarios));
+                agregarBitacora('usuario', `Eliminó usuario: ${user.email}`);
+                renderUsuarios();
+            }
+        }
+
+        // ==================== NAVEGACIÓN Y MODALES ====================
+        function changeView(viewId) {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.getElementById('view-' + viewId).classList.add('active');
+            
+            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+            const activeLink = Array.from(document.querySelectorAll('.nav-link')).find(l => l.dataset.view === viewId);
+            if (activeLink) activeLink.classList.add('active');
+            
+            if (viewId === 'dashboard') renderDashboard();
+            if (viewId === 'bitacora') renderBitacora();
+            if (viewId === 'encuestas') renderEncuestas();
+            if (viewId === 'usuarios') renderUsuarios();
+        }
+
+        function openModal(modalId) {
+            if (modalId === 'encuestaModal') {
+                // Solo resetear si no estamos editando
+                if (!editingSurveyId) {
+                    currentQuestions = [];
+                    document.getElementById('formTitle').value = 'Encuesta sin título';
+                    document.getElementById('formDescription').value = '';
+                    document.getElementById('anonymousSetting').checked = false;
+                    document.getElementById('saveNamesSetting').checked = false;
+                    document.getElementById('emailSetting').checked = false;
+                    document.getElementById('multipleResponsesSetting').checked = false;
+                    document.getElementById('encuestaModalTitle').textContent = 'Crear Nueva Encuesta';
+                    document.getElementById('editingSurveyId').value = '';
+                    renderQuestions();
+                    updatePreview();
+                }
+            }
+            
+            if (modalId === 'usuarioModal') {
+                document.getElementById('usuarioForm').reset();
+                document.getElementById('userId').value = '';
+                document.getElementById('usuarioModalTitle').textContent = 'Nuevo Usuario';
+            }
+            
+            document.getElementById(modalId).classList.add('active');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+            // Limpiar estado de edición al cerrar
+            if (modalId === 'encuestaModal') {
+                editingSurveyId = null;
+                document.getElementById('editingSurveyId').value = '';
+                document.getElementById('encuestaModalTitle').textContent = 'Crear Nueva Encuesta';
+            }
+        }
+
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.classList.remove('active');
+                // Limpiar estado de edición
+                if (event.target.id === 'encuestaModal') {
+                    editingSurveyId = null;
+                    document.getElementById('editingSurveyId').value = '';
+                    document.getElementById('encuestaModalTitle').textContent = 'Crear Nueva Encuesta';
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.nav-link[data-view]').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const viewId = this.getAttribute('data-view');
+                    if (viewId) changeView(viewId);
+                });
+            });
+        });
+    </script>
+</body>
+</html>
