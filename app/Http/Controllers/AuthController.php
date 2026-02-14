@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
+use App\Models\ActivityLog;
 
 class AuthController extends Controller
 {
@@ -23,6 +24,16 @@ class AuthController extends Controller
 
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
+
+            // Log Activity
+            ActivityLog::create([
+                'user_id' => Auth::id(),
+                'user_email' => Auth::user()->email,
+                'action' => 'login',
+                'description' => 'Inicio de sesión exitoso',
+                'type' => 'auth',
+                'ip_address' => $request->ip()
+            ]);
 
             return redirect()->intended('dashboard');
         }
@@ -53,11 +64,33 @@ class AuthController extends Controller
 
         Auth::login($user);
 
+        // Log Activity
+        ActivityLog::create([
+            'user_id' => $user->id,
+            'user_email' => $user->email,
+            'action' => 'register',
+            'description' => 'Nuevo usuario registrado',
+            'type' => 'user',
+            'ip_address' => $request->ip()
+        ]);
+
         return redirect('/dashboard');
     }
 
     public function logout(Request $request)
     {
+        // Log Activity before logout
+        if (Auth::check()) {
+            ActivityLog::create([
+                'user_id' => Auth::id(),
+                'user_email' => Auth::user()->email,
+                'action' => 'logout',
+                'description' => 'Cierre de sesión',
+                'type' => 'auth',
+                'ip_address' => $request->ip()
+            ]);
+        }
+
         Auth::logout();
 
         $request->session()->invalidate();

@@ -10,6 +10,9 @@
                 <i class="fas fa-arrow-left"></i> Volver
             </a>
             <div class="flex gap-2">
+                <a href="{{ route('surveys.public', $survey->id) }}" target="_blank" class="bg-purple-50 text-purple-600 px-4 py-2 rounded-lg font-bold hover:bg-purple-100 transition flex items-center gap-2">
+                    <i class="fas fa-external-link-alt"></i> Responder / Enlace Público
+                </a>
                 <a href="{{ route('surveys.edit', $survey->id) }}" class="bg-blue-50 text-blue-600 px-4 py-2 rounded-lg font-bold hover:bg-blue-100 transition">
                     <i class="fas fa-edit mr-1"></i> Editar
                 </a>
@@ -25,8 +28,12 @@
                 
                 <div class="flex flex-wrap gap-4 text-sm text-gray-500 border-t border-gray-100 pt-6">
                     <div class="flex items-center gap-2">
+                        <i class="far fa-user text-uaemex"></i>
+                        <span>Autor: {{ $survey->user->name ?? 'Desconocido' }}</span>
+                    </div>
+                    <div class="flex items-center gap-2">
                         <i class="far fa-calendar-alt text-uaemex"></i>
-                        <span>Creada: {{ $survey->created_at->format('d/m/Y') }}</span>
+                        <span>Creada: {{ $survey->created_at->format('d/m/Y h:i A') }}</span>
                     </div>
                     <div class="flex items-center gap-2">
                         <i class="far fa-clock text-uaemex"></i>

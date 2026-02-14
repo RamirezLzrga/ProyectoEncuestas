@@ -49,21 +49,22 @@
                         <i class="fas fa-clipboard-list w-5"></i>
                         Encuestas
                     </a>
-                    <a href="#" class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-white/5 hover:text-white rounded-r-lg transition-all duration-200 border-l-4 border-transparent">
+                    <a href="{{ route('statistics.index') }}" class="flex items-center gap-3 px-4 py-3 {{ request()->routeIs('statistics.*') ? 'sidebar-active' : 'text-gray-400 hover:bg-white/5 hover:text-white border-l-4 border-transparent' }} rounded-r-lg transition-all duration-200">
                         <i class="fas fa-chart-line w-5"></i>
                         Estadísticas
                     </a>
                 </div>
             </div>
 
+            @if(Auth::user()->role === 'admin')
             <div>
                 <p class="text-xs font-bold text-gray-400 uppercase mb-3 px-2 tracking-wider">Gestión</p>
                 <div class="space-y-1">
-                    <a href="#" class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-white/5 hover:text-white rounded-r-lg transition-all duration-200 border-l-4 border-transparent">
+                    <a href="{{ route('activity-logs.index') }}" class="flex items-center gap-3 px-4 py-3 {{ request()->routeIs('activity-logs.*') ? 'sidebar-active' : 'text-gray-400 hover:bg-white/5 hover:text-white border-l-4 border-transparent' }} rounded-r-lg transition-all duration-200">
                         <i class="fas fa-book w-5"></i>
                         Bitácora
                     </a>
-                    <a href="#" class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-white/5 hover:text-white rounded-r-lg transition-all duration-200 border-l-4 border-transparent">
+                    <a href="{{ route('users.index') }}" class="flex items-center gap-3 px-4 py-3 {{ request()->routeIs('users.*') ? 'sidebar-active' : 'text-gray-400 hover:bg-white/5 hover:text-white border-l-4 border-transparent' }} rounded-r-lg transition-all duration-200">
                         <i class="fas fa-users w-5"></i>
                         Usuarios
                     </a>
@@ -83,6 +84,7 @@
                     </a>
                 </div>
             </div>
+            @endif
         </nav>
 
         <div class="p-4 bg-white/5 m-4 rounded-xl border border-white/10">
@@ -92,7 +94,13 @@
                 </div>
                 <div class="overflow-hidden">
                     <p class="text-sm font-bold text-white truncate">{{ Auth::user()->name }}</p>
-                    <p class="text-xs text-gray-400">Administrador</p>
+                    <p class="text-xs text-gray-400">
+                        @switch(Auth::user()->role)
+                    @case('admin') Administrador @break
+                    @case('editor') Editor @break
+                    @default Usuario
+                @endswitch
+                    </p>
                 </div>
             </div>
             

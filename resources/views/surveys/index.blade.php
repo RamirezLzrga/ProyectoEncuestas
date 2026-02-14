@@ -59,7 +59,8 @@
                     <thead>
                         <tr class="bg-gray-50 border-b border-gray-100 text-xs uppercase text-gray-500 font-bold tracking-wider">
                             <th class="px-6 py-4">Título</th>
-                            <th class="px-6 py-4">Fecha Inicio</th>
+                            <th class="px-6 py-4">Autor</th>
+                            <th class="px-6 py-4">Creación</th>
                             <th class="px-6 py-4 text-center">Respuestas</th>
                             <th class="px-6 py-4 text-center">Preguntas</th>
                             <th class="px-6 py-4 text-center">Estado</th>
@@ -76,13 +77,23 @@
                                     </div>
                                 </td>
                                 <td class="px-6 py-4">
+                                    <div class="flex items-center gap-2">
+                                        <div class="h-6 w-6 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold text-gray-600">
+                                            {{ substr($survey->user->name ?? '?', 0, 1) }}
+                                        </div>
+                                        <span class="text-sm font-medium text-gray-700">{{ $survey->user->name ?? 'Desconocido' }}</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
                                     <span class="text-sm text-gray-600 flex items-center gap-2">
-                                        <i class="far fa-calendar-alt text-gray-400"></i>
-                                        {{ \Carbon\Carbon::parse($survey->start_date)->format('d/m/Y') }}
+                                        <i class="far fa-clock text-gray-400"></i>
+                                        {{ $survey->created_at ? $survey->created_at->format('d/m/Y h:i A') : 'N/A' }}
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 text-center">
-                                    <span class="bg-gray-100 text-gray-700 text-xs font-bold px-2 py-1 rounded-full">0</span>
+                                    <span class="bg-gray-100 text-gray-700 text-xs font-bold px-2 py-1 rounded-full">
+                                        {{ $survey->responses()->count() }}
+                                    </span>
                                 </td>
                                 <td class="px-6 py-4 text-center">
                                     <span class="text-sm text-gray-600 font-medium">{{ count($survey->questions ?? []) }}</span>
@@ -94,6 +105,9 @@
                                 </td>
                                 <td class="px-6 py-4 text-center">
                                     <div class="flex items-center justify-center gap-2">
+                                        <a href="{{ route('surveys.public', $survey->id) }}" target="_blank" class="text-gray-400 hover:text-purple-600 transition p-2 rounded-lg hover:bg-purple-50" title="Responder / Enlace Público">
+                                            <i class="fas fa-external-link-alt"></i>
+                                        </a>
                                         <a href="{{ route('surveys.show', $survey->id) }}" class="text-gray-400 hover:text-uaemex transition p-2 rounded-lg hover:bg-green-50" title="Ver">
                                             <i class="fas fa-eye"></i>
                                         </a>
