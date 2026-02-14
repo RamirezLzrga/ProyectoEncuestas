@@ -86,40 +86,77 @@
             </div>
             @endif
         </nav>
-
-        <div class="p-4 bg-white/5 m-4 rounded-xl border border-white/10">
-            <div class="flex items-center gap-3 mb-3">
-                <div class="h-10 w-10 rounded-full bg-gold flex items-center justify-center text-uaemex-dark font-bold text-sm">
-                    {{ substr(Auth::user()->name, 0, 2) }}
-                </div>
-                <div class="overflow-hidden">
-                    <p class="text-sm font-bold text-white truncate">{{ Auth::user()->name }}</p>
-                    <p class="text-xs text-gray-400">
-                        @switch(Auth::user()->role)
-                    @case('admin') Administrador @break
-                    @case('editor') Editor @break
-                    @default Usuario
-                @endswitch
-                    </p>
-                </div>
-            </div>
-            
-            <form action="{{ route('logout') }}" method="POST">
-                @csrf
-                <button type="submit" class="w-full flex items-center gap-2 text-red-300 hover:text-red-100 text-xs font-bold uppercase tracking-wider transition pt-2 border-t border-white/10">
-                    <div class="w-1 h-4 bg-red-400 rounded-full"></div> Cerrar Sesión
-                </button>
-            </form>
-        </div>
     </aside>
 
     <!-- Main Content -->
     <main class="flex-1 flex flex-col h-screen overflow-y-auto bg-gray-50">
+        <!-- Top Bar with User Profile -->
+        <header class="bg-white border-b border-gray-200 px-8 py-4 flex justify-end items-center sticky top-0 z-30 shadow-sm">
+            <div class="relative">
+                <button id="userMenuBtn" class="flex items-center justify-center w-12 h-12 rounded-full bg-white border border-gray-200 hover:border-[#d4af37] text-gray-600 hover:text-[#d4af37] transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[#d4af37]/50 shadow-sm active:scale-95 group">
+                    <i class="fas fa-user text-xl group-hover:scale-110 transition-transform"></i>
+                </button>
+
+                <!-- Floating Dropdown Bubble -->
+                <div id="userMenuDropdown" class="hidden absolute right-0 mt-3 w-72 bg-[#1b393b] rounded-xl shadow-2xl border border-white/10 overflow-hidden transform origin-top-right transition-all duration-200 z-50">
+                    <div class="p-5">
+                        <div class="flex items-center gap-4 mb-4">
+                            <div class="w-12 h-12 rounded-full bg-[#d4af37] flex items-center justify-center text-white font-bold text-lg shadow-inner">
+                                {{ substr(Auth::user()->name, 0, 2) }}
+                            </div>
+                            <div class="overflow-hidden">
+                                <p class="text-white font-bold text-base truncate uppercase tracking-wide">{{ Auth::user()->name }}</p>
+                                <span class="inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider
+                                    @if(Auth::user()->role === 'admin') bg-purple-500/20 text-purple-200 border border-purple-500/30
+                                    @elseif(Auth::user()->role === 'editor') bg-blue-500/20 text-blue-200 border border-blue-500/30
+                                    @else bg-gray-500/20 text-gray-200 border border-gray-500/30 @endif">
+                                    @switch(Auth::user()->role)
+                                        @case('admin') Administrador @break
+                                        @case('editor') Editor @break
+                                        @default Usuario
+                                    @endswitch
+                                </span>
+                            </div>
+                        </div>
+
+                        <form action="{{ route('logout') }}" method="POST">
+                            @csrf
+                            <button type="submit" class="w-full flex items-center justify-center gap-2 bg-red-500/10 hover:bg-red-500/20 text-red-300 hover:text-red-200 text-sm font-bold uppercase tracking-wider transition py-3 rounded-lg border border-red-500/20 group">
+                                <i class="fas fa-sign-out-alt group-hover:-translate-x-1 transition-transform"></i>
+                                Cerrar Sesión
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </header>
+
         <div class="p-8 space-y-8 max-w-7xl mx-auto w-full">
             @yield('content')
         </div>
     </main>
 
+    <script>
+        // Toggle User Menu Dropdown
+        document.addEventListener('DOMContentLoaded', function() {
+            const userMenuBtn = document.getElementById('userMenuBtn');
+            const userMenuDropdown = document.getElementById('userMenuDropdown');
+
+            if (userMenuBtn && userMenuDropdown) {
+                userMenuBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    userMenuDropdown.classList.toggle('hidden');
+                });
+
+                // Close dropdown when clicking outside
+                document.addEventListener('click', function(e) {
+                    if (!userMenuBtn.contains(e.target) && !userMenuDropdown.contains(e.target)) {
+                        userMenuDropdown.classList.add('hidden');
+                    }
+                });
+            }
+        });
+    </script>
     @stack('scripts')
 </body>
 </html>
